@@ -11,4 +11,4 @@ gem install mysql           -v=2.8.1
 gem install nokogiri        -v=1.3.3
 gem install rack            -v=1.1.0
 gem install sqlite3-ruby    -v=1.2.5
-gem install tzinfo          -v=0.3.18
+gem install tzinfo          -v=0.3.38
