@@ -7,9 +7,6 @@ set -e
 # Announce who we are
 ruby -v
 
-# Rubygems ver
-echo "Rubygems `gem -v`"
-
 # Because Rails 2.3 doesn't use Bundler for its own tests,
 # we need to setup an isolated gem environment.
 
