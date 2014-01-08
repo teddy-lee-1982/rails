@@ -1,4 +1,5 @@
 require 'rubygems'
+require 'rubygems/source_index'
 require 'yaml'
 
 module Rails
