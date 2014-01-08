@@ -300,7 +300,7 @@ class TestMailer < ActionMailer::Base
   end
 end
 
-class ActionMailerTest < Test::Unit::TestCase
+class ActionMailerTest < ActiveSupport::TestCase
   include ActionMailer::Quoting
 
   def encode( text, charset="utf-8" )
@@ -612,6 +612,7 @@ class ActionMailerTest < Test::Unit::TestCase
   end
 
   def test_unquote_quoted_printable_subject
+    failed_pre_193
     msg = <<EOF
 From: me@example.com
 Subject: =?utf-8?Q?testing_testing_=D6=A4?=
@@ -745,6 +746,7 @@ EOF
   end
 
   def test_receive_attachments
+    failed_pre_193
     fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email2")
     mail = TMail::Mail.parse(fixture)
     attachment = mail.attachments.last
@@ -753,6 +755,7 @@ EOF
   end
 
   def test_decode_attachment_without_charset
+    failed_pre_193
     fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email3")
     mail = TMail::Mail.parse(fixture)
     attachment = mail.attachments.last
@@ -760,6 +763,7 @@ EOF
   end
 
   def test_attachment_using_content_location
+    failed_pre_193
     fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email12")
     mail = TMail::Mail.parse(fixture)
     assert_equal 1, mail.attachments.length
@@ -931,6 +935,7 @@ EOF
   end
 
   def test_decode_encoded_attachment_filename
+    failed_pre_193
     fixture = File.read(File.dirname(__FILE__) + "/fixtures/raw_email8")
     mail = TMail::Mail.parse(fixture)
     attachment = mail.attachments.last

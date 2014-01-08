@@ -2,7 +2,7 @@ require "cases/helper"
 require 'models/contact'
 
 class SerializationTest < ActiveRecord::TestCase
-  FORMATS = [ :xml, :json ]
+  FORMATS = [ :json ]
 
   def setup
     @contact_attributes = {

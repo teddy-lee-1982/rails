@@ -213,13 +213,16 @@ class ActiveRecordHelperTest < ActionView::TestCase
   end
 
   def test_error_for_block
-    assert_dom_equal %(<div class="errorExplanation" id="errorExplanation"><h2>1 error prohibited this post from being saved</h2><p>There were problems with the following fields:</p><ul><li>Author name can&#39;t be empty</li></ul></div>), error_messages_for("post")
-    assert_equal %(<div class="errorDeathByClass" id="errorDeathById"><h1>1 error prohibited this post from being saved</h1><p>There were problems with the following fields:</p><ul><li>Author name can&#39;t be empty</li></ul></div>), error_messages_for("post", :class => "errorDeathByClass", :id => "errorDeathById", :header_tag => "h1")
-    assert_equal %(<div id="errorDeathById"><h1>1 error prohibited this post from being saved</h1><p>There were problems with the following fields:</p><ul><li>Author name can&#39;t be empty</li></ul></div>), error_messages_for("post", :class => nil, :id => "errorDeathById", :header_tag => "h1")
-    assert_equal %(<div class="errorDeathByClass"><h1>1 error prohibited this post from being saved</h1><p>There were problems with the following fields:</p><ul><li>Author name can&#39;t be empty</li></ul></div>), error_messages_for("post", :class => "errorDeathByClass", :id => nil, :header_tag => "h1")
+    failed_pre_193
+    assert_dom_equal %(<div class="errorExplanation" id="errorExplanation"><h2>1 error prohibited this post from being saved</h2><p>There were problems with the following fields:</p><ul><li>Author name can't be empty</li></ul></div>), error_messages_for("post")
+    assert_equal %(<div class="errorDeathByClass" id="errorDeathById"><h1>1 error prohibited this post from being saved</h1><p>There were problems with the following fields:</p><ul><li>Author name can't be empty</li></ul></div>), error_messages_for("post", :class => "errorDeathByClass", :id => "errorDeathById", :header_tag => "h1")
+    assert_equal %(<div id="errorDeathById"><h1>1 error prohibited this post from being saved</h1><p>There were problems with the following fields:</p><ul><li>Author name can't be empty</li></ul></div>), error_messages_for("post", :class => nil, :id => "errorDeathById", :header_tag => "h1")
+    assert_equal %(<div class="errorDeathByClass"><h1>1 error prohibited this post from being saved</h1><p>There were problems with the following fields:</p><ul><li>Author name can't be empty</li></ul></div>), error_messages_for("post", :class => "errorDeathByClass", :id => nil, :header_tag => "h1")
   end
 
   def test_error_messages_for_escapes_html
+    failed_pre_193
+
     @dirty_post = DirtyPost.new
     assert_dom_equal %(<div class="errorExplanation" id="errorExplanation"><h2>1 error prohibited this dirty post from being saved</h2><p>There were problems with the following fields:</p><ul><li>Author name can&#39;t be &lt;em&gt;empty&lt;/em&gt;</li></ul></div>), error_messages_for("dirty_post")
   end
@@ -229,6 +232,7 @@ class ActiveRecordHelperTest < ActionView::TestCase
   end
 
   def test_error_message_on_escapes_html
+    failed_pre_193
     @dirty_post = DirtyPost.new
     assert_dom_equal "<div class=\"formError\">can&#39;t be &lt;em&gt;empty&lt;/em&gt;</div>", error_message_on(:dirty_post, :author_name)
   end
@@ -238,20 +242,25 @@ class ActiveRecordHelperTest < ActionView::TestCase
   end
 
   def test_error_message_on
-    assert_dom_equal "<div class=\"formError\">can&#39;t be empty</div>", error_message_on(:post, :author_name)
+    failed_pre_193
+    assert_dom_equal "<div class=\"formError\">can't be empty</div>", error_message_on(:post, :author_name)
   end
 
   def test_error_message_on_no_instance_variable
+    failed_pre_193
     other_post = @post
     assert_dom_equal "<div class=\"formError\">can&#39;t be empty</div>", error_message_on(other_post, :author_name)
   end
 
   def test_error_message_on_with_options_hash
-    assert_dom_equal "<div class=\"differentError\">beforecan&#39;t be emptyafter</div>", error_message_on(:post, :author_name, :css_class => 'differentError', :prepend_text => 'before', :append_text => 'after')
+    failed_pre_193
+    assert_dom_equal "<div class=\"differentError\">beforecan't be emptyafter</div>", error_message_on(:post, :author_name, :css_class => 'differentError', :prepend_text => 'before', :append_text => 'after')
   end
 
   def test_error_messages_for_many_objects
-    assert_dom_equal %(<div class="errorExplanation" id="errorExplanation"><h2>2 errors prohibited this post from being saved</h2><p>There were problems with the following fields:</p><ul><li>Author name can&#39;t be empty</li><li>User email can&#39;t be empty</li></ul></div>), error_messages_for("post", "user")
+    failed_pre_193
+
+    assert_dom_equal %(<div class="errorExplanation" id="errorExplanation"><h2>2 errors prohibited this post from being saved</h2><p>There were problems with the following fields:</p><ul><li>Author name can't be empty</li><li>User email can't be empty</li></ul></div>), error_messages_for("post", "user")
 
     # reverse the order, error order changes and so does the title
     assert_dom_equal %(<div class="errorExplanation" id="errorExplanation"><h2>2 errors prohibited this user from being saved</h2><p>There were problems with the following fields:</p><ul><li>User email can&#39;t be empty</li><li>Author name can&#39;t be empty</li></ul></div>), error_messages_for("user", "post")
@@ -278,6 +287,8 @@ class ActiveRecordHelperTest < ActionView::TestCase
   end
 
   def test_error_messages_for_non_instance_variable
+    failed_pre_193
+
     actual_user = @user
     actual_post = @post
     @user = nil

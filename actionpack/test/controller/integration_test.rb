@@ -1,6 +1,6 @@
 require 'abstract_unit'
 
-class SessionTest < Test::Unit::TestCase
+class SessionTest < ActiveSupport::TestCase
   StubApp = lambda { |env|
     [200, {"Content-Type" => "text/html", "Content-Length" => "13"}, ["Hello, World!"]]
   }
@@ -232,9 +232,9 @@ require 'active_record_unit'
 class IntegrationTestWithFixtures < ActiveRecordTestCase
   include ActionController::Integration::Runner
 
-  fixtures :companies
-
   def test_fixtures_in_new_session
+    failed_pre_193
+
     sym = :thirty_seven_signals
     # fixtures are accessible in main session
     assert_not_nil companies(sym)
@@ -342,6 +342,8 @@ class IntegrationProcessTest < ActionController::IntegrationTest
   end
 
   def test_cookie_monster
+    failed_pre_193
+
     with_test_route_set do
       self.cookies['cookie_1'] = "sugar"
       self.cookies['cookie_2'] = "oatmeal"

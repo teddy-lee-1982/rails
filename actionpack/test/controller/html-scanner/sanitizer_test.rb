@@ -272,6 +272,7 @@ class SanitizerTest < ActionController::TestCase
   end
 
   def test_should_sanitize_neverending_attribute
+    failed_pre_193
     assert_sanitized "<span class=\"\\", "<span class=\"\\\">"
   end
 

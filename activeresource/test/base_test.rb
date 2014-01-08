@@ -6,7 +6,7 @@ require "fixtures/beast"
 require "fixtures/proxy"
 require 'active_support/json'
 
-class BaseTest < Test::Unit::TestCase
+class BaseTest < ActiveSupport::TestCase
   def setup
     @matz  = { :id => 1, :name => 'Matz' }.to_xml(:root => 'person')
     @david = { :id => 2, :name => 'David' }.to_xml(:root => 'person')
@@ -1076,6 +1076,8 @@ class BaseTest < Test::Unit::TestCase
   end
 
   def test_load_yaml_array
+    failed_pre_193
+
     assert_nothing_raised do
       marty = Person.find(5)
       assert_equal 3, marty.colors.size

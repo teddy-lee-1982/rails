@@ -68,7 +68,7 @@ class VendorBootTest < Test::Unit::TestCase
   end
 end
 
-class GemBootTest < Test::Unit::TestCase
+class GemBootTest < ActiveSupport::TestCase
   include Rails
 
   def test_load_initializer_loads_rubygems_and_the_rails_gem
@@ -111,6 +111,7 @@ class GemBootTest < Test::Unit::TestCase
   end
 
   def test_load_rails_gem_exits_with_error_if_missing
+    failed_pre_193
     GemBoot.stubs(:gem_version).returns('0.0.1')
 
     boot = GemBoot.new

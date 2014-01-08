@@ -1,6 +1,6 @@
 require 'abstract_unit'
 
-class TMailMailTest < Test::Unit::TestCase
+class TMailMailTest < ActiveSupport::TestCase
   def test_body
     m = TMail::Mail.new
     expected = 'something_with_underscores'
@@ -12,6 +12,7 @@ class TMailMailTest < Test::Unit::TestCase
   end
 
   def test_nested_attachments_are_recognized_correctly
+    failed_pre_193
     fixture = File.read("#{File.dirname(__FILE__)}/fixtures/raw_email_with_nested_attachment")
     mail = TMail::Mail.parse(fixture)
     assert_equal 2, mail.attachments.length

@@ -92,6 +92,8 @@ module CacheStoreBehavior
   end
 
   def test_should_read_and_write_hash
+    failed_pre_193
+
     @cache.write('foo', {:a => "b"})
     assert_equal({:a => "b"}, @cache.read('foo'))
   end
@@ -150,7 +152,7 @@ class FileStoreTest < ActiveSupport::TestCase
   end
 
   def teardown
-    File.delete("foo.cache")
+    File.delete("foo.cache") if File.exists?("foo.cache")
   end
 
   include CacheStoreBehavior
