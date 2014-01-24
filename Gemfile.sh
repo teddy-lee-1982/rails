@@ -9,6 +9,5 @@ gem install i18n            -v=0.4.1
 gem install memcache-client -v=1.5.0
 gem install mysql           -v=2.8.1
 gem install nokogiri        -v=1.3.3
-gem install rack            -v=1.1.0
 gem install sqlite3-ruby    -v=1.2.5
 gem install tzinfo          -v=0.3.38
