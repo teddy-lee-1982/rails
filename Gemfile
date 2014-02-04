@@ -3,7 +3,10 @@ source 'http://rubygems.org'
 gemspec
 
 gem "rake",  ">= 0.8.7"
-gem 'mocha', '>= 0.13.0', :require => false
+# This needs to be with require false as it is
+# loaded after loading the test library to
+# ensure correct loading order
+gem 'mocha', '~> 0.14', require: false
 
 group :doc do
   gem "rdoc",  "~> 3.4"
