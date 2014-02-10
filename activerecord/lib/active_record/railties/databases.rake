@@ -150,6 +150,7 @@ namespace :db do
     ActiveRecord::Migration.verbose = ENV["VERBOSE"] ? ENV["VERBOSE"] == "true" : true
     ActiveRecord::Migrator.migrate("db/migrate/", ENV["VERSION"] ? ENV["VERSION"].to_i : nil)
     Rake::Task["db:schema:dump"].invoke if ActiveRecord::Base.schema_format == :ruby
+    Rake::Task["db:structure:dump"].invoke if ActiveRecord::Base.schema_format == :sql
   end
 
   namespace :migrate do
@@ -173,6 +174,7 @@ namespace :db do
       raise "VERSION is required" unless version
       ActiveRecord::Migrator.run(:up, "db/migrate/", version)
       Rake::Task["db:schema:dump"].invoke if ActiveRecord::Base.schema_format == :ruby
+      Rake::Task["db:structure:dump"].invoke if ActiveRecord::Base.schema_format == :sql
     end
 
     # desc 'Runs the "down" for a given migration VERSION.'
@@ -181,6 +183,7 @@ namespace :db do
       raise "VERSION is required" unless version
       ActiveRecord::Migrator.run(:down, "db/migrate/", version)
       Rake::Task["db:schema:dump"].invoke if ActiveRecord::Base.schema_format == :ruby
+      Rake::Task["db:structure:dump"].invoke if ActiveRecord::Base.schema_format == :sql
     end
 
     desc "Display status of migrations"
@@ -219,6 +222,7 @@ namespace :db do
     step = ENV['STEP'] ? ENV['STEP'].to_i : 1
     ActiveRecord::Migrator.rollback('db/migrate/', step)
     Rake::Task["db:schema:dump"].invoke if ActiveRecord::Base.schema_format == :ruby
+    Rake::Task["db:structure:dump"].invoke if ActiveRecord::Base.schema_format == :sql
   end
 
   # desc 'Pushes the schema to the next version (specify steps w/ STEP=n).'
@@ -226,6 +230,7 @@ namespace :db do
     step = ENV['STEP'] ? ENV['STEP'].to_i : 1
     ActiveRecord::Migrator.forward('db/migrate/', step)
     Rake::Task["db:schema:dump"].invoke if ActiveRecord::Base.schema_format == :ruby
+    Rake::Task["db:structure:dump"].invoke if ActiveRecord::Base.schema_format == :sql
   end
 
   # desc 'Drops and recreates the database from db/schema.rb for the current environment and loads the seeds.'
@@ -282,7 +287,12 @@ namespace :db do
   end
 
   desc 'Create the database, load the schema, and initialize with the seed data (use db:reset to also drop the db first)'
-  task :setup => [ 'db:create', 'db:schema:load', 'db:seed' ]
+  task :setup do
+     Rake::Task['db:create'].invoke
+     Rake::Task['db:schema:load'].invoke if ActiveRecord::Base.schema_format == :ruby
+     Rake::Task['db:structure:load'].invoke if ActiveRecord::Base.schema_format == :sql
+     Rake::Task['db:seed'].invoke
+  end
 
   desc 'Load the seed data from db/seeds.rb'
   task :seed => 'db:abort_if_pending_migrations' do
@@ -387,6 +397,22 @@ namespace :db do
         File.open("#{Rails.root}/db/#{Rails.env}_structure.sql", "a") { |f| f << ActiveRecord::Base.connection.dump_schema_information }
       end
     end
+
+    # desc "Recreate the databases from the structure.sql file"
+    task :load => [:environment, :load_config] do
+      config = current_config
+      filename = ENV['DB_STRUCTURE'] || File.join(Rails.root, "db", "structure.sql")
+      case config['adapter']
+      when /mysql/
+        ActiveRecord::Base.establish_connection(config)
+        ActiveRecord::Base.connection.execute('SET foreign_key_checks = 0')
+        IO.read(filename).split("\n\n").each do |table|
+          ActiveRecord::Base.connection.execute(table)
+        end
+      else
+        raise "Task not supported by '#{config['adapter']}'"
+      end
+    end
   end
 
   namespace :test do
@@ -394,11 +420,16 @@ namespace :db do
     task :load => 'db:test:purge' do
       ActiveRecord::Base.establish_connection(ActiveRecord::Base.configurations['test'])
       ActiveRecord::Schema.verbose = false
-      Rake::Task["db:schema:load"].invoke
+      Rake::Task["db:schema:load"].invoke if ActiveRecord::Base.schema_format == :ruby
+      Rake::Task["db:structure:load"].invoke if ActiveRecord::Base.schema_format == :sql
     end
 
     # desc "Recreate the test database from the current environment's database schema"
-    task :clone => %w(db:schema:dump db:test:load)
+    task :clone do
+      Rake::Task["db:schema:dump"].invoke if ActiveRecord::Base.schema_format == :ruby
+      Rake::Task["db:structure:dump"].invoke if ActiveRecord::Base.schema_format == :sql
+      Rake::Task["db:test:load"].invoke
+    end
 
     # desc "Recreate the test databases from the development structure"
     task :clone_structure => [ "db:structure:dump", "db:test:purge" ] do
@@ -407,28 +438,28 @@ namespace :db do
       when /^(jdbc)?mysql/
         ActiveRecord::Base.establish_connection(:test)
         ActiveRecord::Base.connection.execute('SET foreign_key_checks = 0')
-        IO.readlines("#{Rails.root}/db/#{Rails.env}_structure.sql").join.split("\n\n").each do |table|
+        IO.readlines("#{Rails.root}/db/structure.sql").join.split("\n\n").each do |table|
           ActiveRecord::Base.connection.execute(table)
         end
       when /^(jdbc)?postgresql$/
         ENV['PGHOST']     = abcs["test"]["host"] if abcs["test"]["host"]
         ENV['PGPORT']     = abcs["test"]["port"].to_s if abcs["test"]["port"]
         ENV['PGPASSWORD'] = abcs["test"]["password"].to_s if abcs["test"]["password"]
-        `psql -U "#{abcs["test"]["username"]}" -f #{Rails.root}/db/#{Rails.env}_structure.sql #{abcs["test"]["database"]}`
+        `psql -U "#{abcs["test"]["username"]}" -f #{Rails.root}/db/structure.sql #{abcs["test"]["database"]}`
       when /^(jdbc)?sqlite/
         dbfile = abcs["test"]["database"] || abcs["test"]["dbfile"]
-        `sqlite3 #{dbfile} < #{Rails.root}/db/#{Rails.env}_structure.sql`
+        `sqlite3 #{dbfile} < #{Rails.root}/db/structure.sql`
       when "sqlserver"
-        `osql -E -S #{abcs["test"]["host"]} -d #{abcs["test"]["database"]} -i db\\#{Rails.env}_structure.sql`
+        `osql -E -S #{abcs["test"]["host"]} -d #{abcs["test"]["database"]} -i db\\structure.sql`
       when "oci", "oracle"
         ActiveRecord::Base.establish_connection(:test)
-        IO.readlines("#{Rails.root}/db/#{Rails.env}_structure.sql").join.split(";\n\n").each do |ddl|
+        IO.readlines("#{Rails.root}/db/structure.sql").join.split(";\n\n").each do |ddl|
           ActiveRecord::Base.connection.execute(ddl)
         end
       when "firebird"
         set_firebird_env(abcs["test"])
         db_string = firebird_db_string(abcs["test"])
-        sh "isql -i #{Rails.root}/db/#{Rails.env}_structure.sql #{db_string}"
+        sh "isql -i #{Rails.root}/db/structure.sql #{db_string}"
       else
         raise "Task not supported by '#{abcs["test"]["adapter"]}'"
       end
