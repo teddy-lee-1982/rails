@@ -1,12 +1,12 @@
 namespace :db do
-  task :load_config => :rails_env do
+  task :load_config do
     require 'active_record'
     ActiveRecord::Base.configurations = Rails.application.config.database_configuration
   end
 
   namespace :create do
     # desc 'Create all the local databases defined in config/database.yml'
-    task :all => :load_config do
+    task :all => [:load_config, :rails_env] do
       ActiveRecord::Base.configurations.each_value do |config|
         # Skip entries that don't have a database key, such as the first entry here:
         #
@@ -27,7 +27,7 @@ namespace :db do
   end
 
   desc 'Create the database from config/database.yml for the current Rails.env (use db:create:all to create all dbs in the config)'
-  task :create => :load_config do
+  task :create => [:load_config, :rails_env] do
     # Make the test database at the same time as the development one, if it exists
     if Rails.env.development? && ActiveRecord::Base.configurations['test']
       create_database(ActiveRecord::Base.configurations['test'])
@@ -112,7 +112,7 @@ namespace :db do
 
   namespace :drop do
     # desc 'Drops all the local databases defined in config/database.yml'
-    task :all => :load_config do
+    task :all => [:load_config, :rails_env] do
       ActiveRecord::Base.configurations.each_value do |config|
         # Skip entries that don't have a database key
         next unless config['database']
@@ -127,8 +127,8 @@ namespace :db do
   end
 
   desc 'Drops the database for the current Rails.env (use db:drop:all to drop all databases)'
-  task :drop => :load_config do
-    config = ActiveRecord::Base.configurations[Rails.env || 'development']
+  task :drop => [:load_config, :rails_env] do
+    config = ActiveRecord::Base.configurations[Rails.env]
     begin
       drop_database(config)
     rescue Exception => e
@@ -187,8 +187,8 @@ namespace :db do
     end
 
     desc "Display status of migrations"
-    task :status => :environment do
-      config = ActiveRecord::Base.configurations[Rails.env || 'development']
+    task :status => [:environment, :load_config, :rails_env] do
+      config = ActiveRecord::Base.configurations[Rails.env]
       ActiveRecord::Base.establish_connection(config)
       unless ActiveRecord::Base.connection.table_exists?(ActiveRecord::Migrator.schema_migrations_table_name)
         puts 'Schema migrations table does not exist yet.'
@@ -237,8 +237,8 @@ namespace :db do
   task :reset => [ 'db:drop', 'db:setup' ]
 
   # desc "Retrieves the charset for the current environment's database"
-  task :charset => :environment do
-    config = ActiveRecord::Base.configurations[Rails.env || 'development']
+  task :charset => [:environment, :load_config, :rails_env] do
+    config = ActiveRecord::Base.configurations[Rails.env]
     case config['adapter']
     when /^(jdbc)?mysql/
       ActiveRecord::Base.establish_connection(config)
@@ -255,8 +255,8 @@ namespace :db do
   end
 
   # desc "Retrieves the collation for the current environment's database"
-  task :collation => :environment do
-    config = ActiveRecord::Base.configurations[Rails.env || 'development']
+  task :collation => [:environment, :load_config, :rails_env] do
+    config = ActiveRecord::Base.configurations[Rails.env]
     case config['adapter']
     when /^(jdbc)?mysql/
       ActiveRecord::Base.establish_connection(config)
@@ -302,7 +302,7 @@ namespace :db do
 
   namespace :fixtures do
     desc "Load fixtures into the current environment's database.  Load specific fixtures using FIXTURES=x,y. Load from subdirectory in test/fixtures using FIXTURES_DIR=z. Specify an alternative path (eg. spec/fixtures) using FIXTURES_PATH=spec/fixtures."
-    task :load => :environment do
+    task :load => [:environment, :load_config, :rails_env] do
       require 'active_record/fixtures'
 
       ActiveRecord::Base.establish_connection(Rails.env)
@@ -340,7 +340,7 @@ namespace :db do
 
   namespace :schema do
     desc "Create a db/schema.rb file that can be portably used against any DB supported by AR"
-    task :dump => :environment do
+     task :dump => [:environment, :load_config, :rails_env] do
       require 'active_record/schema_dumper'
       filename = ENV['SCHEMA'] || "#{Rails.root}/db/schema.rb"
       File.open(filename, "w:utf-8") do |file|
@@ -351,7 +351,7 @@ namespace :db do
     end
 
     desc "Load a schema.rb file into the database"
-    task :load => :environment do
+    task :load => [:environment, :load_config, :rails_env] do
       file = ENV['SCHEMA'] || "#{Rails.root}/db/schema.rb"
       if File.exists?(file)
         load(file)
@@ -363,7 +363,7 @@ namespace :db do
 
   namespace :structure do
     desc "Dump the database structure to an SQL file"
-    task :dump => :environment do
+    task :dump => [:environment, :load_config, :rails_env] do
       abcs = ActiveRecord::Base.configurations
       case abcs[Rails.env]["adapter"]
       when /^(jdbc)?mysql/, "oci", "oracle"
@@ -399,8 +399,8 @@ namespace :db do
     end
 
     # desc "Recreate the databases from the structure.sql file"
-    task :load => [:environment, :load_config] do
-      config = current_config
+    task :load => [:environment, :load_config, :rails_env] do
+      config = ActiveRecord::Base.configurations[Rails.env]
       filename = ENV['DB_STRUCTURE'] || File.join(Rails.root, "db", "structure.sql")
       case config['adapter']
       when /mysql/
