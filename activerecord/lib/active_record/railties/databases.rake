@@ -368,7 +368,7 @@ namespace :db do
       case abcs[Rails.env]["adapter"]
       when /^(jdbc)?mysql/, "oci", "oracle"
         ActiveRecord::Base.establish_connection(abcs[Rails.env])
-        File.open("#{Rails.root}/db/#{Rails.env}_structure.sql", "w+") { |f| f << ActiveRecord::Base.connection.structure_dump }
+        File.open("#{Rails.root}/db/structure.sql", "w+") { |f| f << ActiveRecord::Base.connection.structure_dump }
       when /^(jdbc)?postgresql$/
         ENV['PGHOST']     = abcs[Rails.env]["host"] if abcs[Rails.env]["host"]
         ENV['PGPORT']     = abcs[Rails.env]["port"].to_s if abcs[Rails.env]["port"]
@@ -377,24 +377,24 @@ namespace :db do
         unless search_path.blank?
           search_path = search_path.split(",").map{|search_path| "--schema=#{search_path.strip}" }.join(" ")
         end
-        `pg_dump -i -U "#{abcs[Rails.env]["username"]}" -s -x -O -f db/#{Rails.env}_structure.sql #{search_path} #{abcs[Rails.env]["database"]}`
+        `pg_dump -i -U "#{abcs[Rails.env]["username"]}" -s -x -O -f db/structure.sql #{search_path} #{abcs[Rails.env]["database"]}`
         raise "Error dumping database" if $?.exitstatus == 1
       when /^(jdbc)?sqlite/
         dbfile = abcs[Rails.env]["database"] || abcs[Rails.env]["dbfile"]
-        `sqlite3 #{dbfile} .schema > db/#{Rails.env}_structure.sql`
+        `sqlite3 #{dbfile} .schema > db/structure.sql`
       when "sqlserver"
-        `scptxfr /s #{abcs[Rails.env]["host"]} /d #{abcs[Rails.env]["database"]} /I /f db\\#{Rails.env}_structure.sql /q /A /r`
+        `scptxfr /s #{abcs[Rails.env]["host"]} /d #{abcs[Rails.env]["database"]} /I /f db\\structure.sql /q /A /r`
         `scptxfr /s #{abcs[Rails.env]["host"]} /d #{abcs[Rails.env]["database"]} /I /F db\ /q /A /r`
       when "firebird"
         set_firebird_env(abcs[Rails.env])
         db_string = firebird_db_string(abcs[Rails.env])
-        sh "isql -a #{db_string} > #{Rails.root}/db/#{Rails.env}_structure.sql"
+        sh "isql -a #{db_string} > #{Rails.root}/db/structure.sql"
       else
         raise "Task not supported by '#{abcs[Rails.env]["adapter"]}'"
       end
 
       if ActiveRecord::Base.connection.supports_migrations?
-        File.open("#{Rails.root}/db/#{Rails.env}_structure.sql", "a") { |f| f << ActiveRecord::Base.connection.dump_schema_information }
+        File.open("#{Rails.root}/db/structure.sql", "a") { |f| f << ActiveRecord::Base.connection.dump_schema_information }
       end
     end
 
@@ -482,7 +482,7 @@ namespace :db do
       when "sqlserver"
         dropfkscript = "#{abcs["test"]["host"]}.#{abcs["test"]["database"]}.DP1".gsub(/\\/,'-')
         `osql -E -S #{abcs["test"]["host"]} -d #{abcs["test"]["database"]} -i db\\#{dropfkscript}`
-        `osql -E -S #{abcs["test"]["host"]} -d #{abcs["test"]["database"]} -i db\\#{Rails.env}_structure.sql`
+        `osql -E -S #{abcs["test"]["host"]} -d #{abcs["test"]["database"]} -i db\\structure.sql`
       when "oci", "oracle"
         ActiveRecord::Base.establish_connection(:test)
         ActiveRecord::Base.connection.structure_drop.split(";\n\n").each do |ddl|
