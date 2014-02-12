@@ -425,7 +425,12 @@ Run `rake gems:install` to install the missing gems.
     # For Ruby 1.9, this does nothing. Specify the default encoding in the Ruby
     # shebang line if you don't want UTF-8.
     def initialize_encoding
-      $KCODE='u' if RUBY_VERSION < '1.9'
+      if RUBY_VERSION < '1.9'
+        $KCODE='u'
+      else
+        Encoding.default_external = Encoding::UTF_8
+        Encoding.default_internal = Encoding::UTF_8
+      end
     end
 
     # This initialization routine does nothing unless <tt>:active_record</tt>
